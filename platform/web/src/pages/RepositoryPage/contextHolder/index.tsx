@@ -25,7 +25,6 @@ export default function ContextHolder({ update }: { update: () => void }) {
 					}}
 					showClear
 					onChange={(value) => {
-						console.log(value);
 						setUrl(value);
 					}}
 				></Input>
@@ -50,7 +49,6 @@ export default function ContextHolder({ update }: { update: () => void }) {
 					}}
 					showClear
 					onChange={(value) => {
-						console.log(value);
 						setToken(value);
 					}}
 				></Input>
@@ -78,7 +76,6 @@ export default function ContextHolder({ update }: { update: () => void }) {
 						defaultValue={1}
 						style={{ width: 120 }}
 						onChange={(value) => {
-							console.log(value);
 							setStoreType(value as number);
 						}}
 					>
@@ -125,6 +122,12 @@ export default function ContextHolder({ update }: { update: () => void }) {
 				}}
 				type="primary"
 				onClick={() => {
+					if (!url || !token) {
+						Toast.error({
+							content: "请填写完整信息"
+						});
+						return;
+					}
 					const toast = Toast.info({
 						content: "正在更新仓库",
 						duration: 0
@@ -151,6 +154,3 @@ export default function ContextHolder({ update }: { update: () => void }) {
 		</Space>
 	);
 }
-
-// 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
-// https://github.com/StellarisW/test
