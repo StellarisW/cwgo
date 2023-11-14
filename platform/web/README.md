@@ -27,3 +27,11 @@ pnpm run build
 可以通过 `pnpm run preview` 来预览生产环境构建结果。
 
 打包产物位于 `dist` 目录下。
+
+## 配置更改
+
+开发环境域名配置位于 `vite.config.ts` 中的 `proxy`。
+
+## 部署
+
+项目使用客户端路由，因此需要后端配置 `index.html` 的路由规则。
