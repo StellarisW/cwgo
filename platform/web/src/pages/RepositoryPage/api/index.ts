@@ -9,7 +9,7 @@ async function getRepo(currentPage = 1, pageSize = 10) {
 			order_by: "create_time"
 		}
 	});
-	return repoData.data.repositories;
+	return repoData.data;
 }
 
 async function createRepo(
@@ -36,6 +36,13 @@ async function updateRepo(id: number, token: string, status: number) {
 	return repoData.msg;
 }
 
+async function syncRepo(id: number) {
+	const repoData: { msg: string } = await service.post(`/api/repo/sync`, {
+		ids: [id]
+	});
+	return repoData.msg;
+}
+
 async function deleteRepo(id: number) {
 	const repoData: { msg: string } = await service.delete(`/api/repo`, {
 		data: {
@@ -45,4 +52,4 @@ async function deleteRepo(id: number) {
 	return repoData.msg;
 }
 
-export { getRepo, createRepo, updateRepo, deleteRepo };
+export { getRepo, createRepo, updateRepo, deleteRepo, syncRepo };

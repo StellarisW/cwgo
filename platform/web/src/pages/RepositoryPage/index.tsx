@@ -17,15 +17,14 @@ import { UpdateRepo } from "../../types";
 import { IconInfoCircle } from "@douyinfe/semi-icons";
 import ContextHolder from "./contextHolder";
 
-const pageSize = 2;
-const total = 4;
-
 export default function RepositoryPage() {
 	const [dataSource, setData] = useState<unknown>([]);
 	const [loading, setLoading] = useState(false);
 	const [currentPage, setPage] = useState(1);
 	const [modal, contextHolder] = Modal.useModal();
+	const [total, setTotal] = useState(0);
 	let destroyFn = () => {};
+	const pageSize = 10;
 
 	/**
 	 * 更新数据
@@ -36,7 +35,9 @@ export default function RepositoryPage() {
 		setPage(currentPage);
 		const curDataSource = await new Promise((res) => {
 			getRepo(currentPage, pageSize).then((data) => {
-				res(data);
+				res(data.repositories);
+				setTotal(data.total);
+				console.log(data.total);
 			});
 		});
 		setData(curDataSource);
@@ -117,7 +118,16 @@ export default function RepositoryPage() {
 				return (
 					<Space>
 						<Tooltip content={token}>
-							<Button>查看 token</Button>
+							<Button
+								onClick={() => {
+									navigator.clipboard.writeText(token);
+									Toast.success({
+										content: "已复制到剪贴板"
+									});
+								}}
+							>
+								查看 token
+							</Button>
 						</Tooltip>
 					</Space>
 				);
@@ -152,6 +162,30 @@ export default function RepositoryPage() {
 						>
 							强制更新仓库
 						</Button>
+						{/* <Button
+							type="warning"
+							onClick={() => {
+								const toast = Toast.info({
+									content: "正在同步仓库",
+									duration: 0
+								});
+								syncRepo(id)
+									.then((res) => {
+										Toast.success(res);
+										fetchData(currentPage);
+									})
+									.catch((err) => {
+										Toast.error({
+											content: err.response.data.msg
+										});
+									})
+									.finally(() => {
+										Toast.close(toast);
+									});
+							}}
+						>
+							同步仓库
+						</Button> */}
 						<Button
 							type="danger"
 							onClick={() => {
