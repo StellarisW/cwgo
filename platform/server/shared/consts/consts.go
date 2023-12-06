@@ -18,9 +18,32 @@
 
 package consts
 
+import (
+	"os"
+	"path/filepath"
+)
+
 const (
 	ProjectName = "cwgo"
 
 	ServiceNameApi   = ProjectName + "-" + ServerTypeApi
 	ServiceNameAgent = ProjectName + "-" + ServerTypeAgent
+
+	AgentMetadataFile = ServiceNameAgent + ".yaml"
 )
+
+const (
+	DefaultLimit = 20
+)
+
+const (
+	RdbKeyRegistryService = ProjectName + ":" + "registry:service:%s"
+)
+
+var (
+	TempDir string
+)
+
+func init() {
+	TempDir = filepath.Join(os.TempDir(), ProjectName)
+}

@@ -11,7 +11,26 @@ const (
 	RepositoryTypeNumGithub
 )
 
+var (
+	RepositoryTypeNumMap = map[int]struct{}{
+		RepositoryTypeNumGitLab: {},
+		RepositoryTypeNumGithub: {},
+	}
+)
+
 const (
-	RepositoryStatusActive    = "active"
-	RepositoryStatusDisactive = "disactive"
+	RepositoryStoreTypeNumIdl = iota + 1
+	RepositoryStoreTypeNumService
+)
+
+const (
+	RepositoryStatusNumActive = iota + 1
+	RepositoryStatusNumInactive
+)
+
+var (
+	RepositoryStatusNumMap = map[int]struct{}{
+		RepositoryStatusNumActive:   {},
+		RepositoryStatusNumInactive: {},
+	}
 )

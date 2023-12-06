@@ -20,11 +20,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/go-github/v53/github"
+	"github.com/cloudwego/cwgo/platform/server/shared/utils"
+	"github.com/google/go-github/v56/github"
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 type GitHubApi struct {
@@ -38,46 +38,60 @@ func NewGitHubApi(client *github.Client) *GitHubApi {
 }
 
 const (
-	githubURLPrefix = "https://github.com/"
+	githubURLPrefix  = "https://github.com/"
+	regGitHubURL     = `https://github\.com/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)`
+	regGithubRepoURL = `https://github\.com/([^\/]+)\/([^\/]+)`
 )
 
-func (a *GitHubApi) ParseUrl(url string) (filePid, owner, repoName string, err error) {
-	var tempPath string
-	if strings.HasPrefix(url, githubURLPrefix) {
-		tempPath = url[len(githubURLPrefix):]
-		lastQuestionMarkIndex := strings.LastIndex(tempPath, "?")
-		if lastQuestionMarkIndex != -1 {
-			tempPath = tempPath[:lastQuestionMarkIndex]
-		}
-	} else {
-		return "", "", "", errors.New("idlPath format wrong,do not have prefix: " + githubURLPrefix)
-	}
-	regex := regexp.MustCompile(`([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+)`)
-	matches := regex.FindStringSubmatch(tempPath)
+func (a *GitHubApi) ParseIdlUrl(url string) (filePid, owner, repoName string, err error) {
+	// define a regular expression to parse the GitHub URL.
+	regex := regexp.MustCompile(regGitHubURL)
+
+	// use the regular expression to extract relevant components from the URL.
+	matches := regex.FindStringSubmatch(url)
 	if len(matches) != 5 {
-		return "", "", "", errors.New("idlPath format wrong,cannot parse github URL")
+		return "", "", "", errors.New("IDL path format is incorrect; unable to parse the GitHub URL")
 	}
+
+	// assign values to the returned variables.
 	owner = matches[1]
 	repoName = matches[2]
 	filePid = matches[4]
+
 	return filePid, owner, repoName, nil
 }
 
+func (a *GitHubApi) ParseRepoUrl(url string) (owner, repoName string, err error) {
+	// extracting information using regular expressions
+	r := regexp.MustCompile(regGithubRepoURL)
+	matches := r.FindStringSubmatch(url)
+	if len(matches) != 3 {
+		return "", "", errors.New("repository path format is incorrect; unable to parse the GitHub URL")
+	}
+
+	return matches[1], matches[2], nil
+}
+
 func (a *GitHubApi) GetFile(owner, repoName, filePath, ref string) (*File, error) {
+	// prepare options with the desired Git reference.
 	opts := &github.RepositoryContentGetOptions{
 		Ref: ref,
 	}
+
+	// download the file content from the GitHub repository.
 	fileContent, _, err := a.client.Repositories.DownloadContents(context.Background(), owner, repoName, filePath, opts)
 	if err != nil {
 		return nil, err
 	}
 	defer fileContent.Close()
 
+	// read the file content into a byte slice.
 	content, err := ioutil.ReadAll(fileContent)
 	if err != nil {
 		return nil, err
 	}
 
+	// create a File struct with the file name and content.
 	return &File{
 		Name:    filePath,
 		Content: content,
@@ -85,13 +99,19 @@ func (a *GitHubApi) GetFile(owner, repoName, filePath, ref string) (*File, error
 }
 
 func (a *GitHubApi) PushFilesToRepository(files map[string][]byte, owner, repoName, branch, commitMessage string) error {
-	// Get a reference to the default branch
+	// get a reference to the default branch
 	ref, _, err := a.client.Git.GetRef(context.Background(), owner, repoName, "refs/heads/"+branch)
 	if err != nil {
 		return err
 	}
 
-	// Create a new Tree object for the file to be pushed
+	// obtain the tree for the default branch
+	baseTree, _, err := a.client.Git.GetTree(context.Background(), owner, repoName, *ref.Object.SHA, false)
+	if err != nil {
+		return err
+	}
+
+	// create a new Tree object for the file to be pushed
 	var treeEntries []*github.TreeEntry
 	for filePath, content := range files {
 		treeEntries = append(treeEntries, &github.TreeEntry{
@@ -100,21 +120,32 @@ func (a *GitHubApi) PushFilesToRepository(files map[string][]byte, owner, repoNa
 			Mode:    github.String("100644"),
 		})
 	}
+
+	// add a new file to the tree of the default branch
+	treeEntries = append(treeEntries, baseTree.Entries...)
+
 	newTree, _, err := a.client.Git.CreateTree(context.Background(), owner, repoName, *ref.Object.SHA, treeEntries)
 	if err != nil {
 		return err
 	}
 
-	// Create a new commit object, using the new tree as its foundation
-	newCommit, _, err := a.client.Git.CreateCommit(context.Background(), owner, repoName, &github.Commit{
-		Message: github.String(commitMessage),
-		Tree:    newTree,
-	})
+	// create a new commit object, using the new tree as its foundation
+	newCommit, _, err := a.client.Git.CreateCommit(
+		context.Background(),
+		owner,
+		repoName,
+		&github.Commit{
+			Message: github.String(commitMessage),
+			Tree:    newTree,
+			Parents: []*github.Commit{{SHA: ref.Object.SHA}},
+		},
+		&github.CreateCommitOptions{},
+	)
 	if err != nil {
 		return err
 	}
 
-	// Update branch references to point to new submissions
+	// update branch references to point to new submissions
 	_, _, err = a.client.Git.UpdateRef(context.Background(), owner, repoName, &github.Reference{
 		Ref: github.String("refs/heads/" + branch),
 		Object: &github.GitObject{
@@ -129,26 +160,41 @@ func (a *GitHubApi) PushFilesToRepository(files map[string][]byte, owner, repoNa
 	return nil
 }
 
-func (a *GitHubApi) GetRepositoryArchive(owner, repoName, format, ref string) ([]byte, error) {
+func (a *GitHubApi) GetRepositoryArchive(owner, repoName, ref string) ([]byte, error) {
+	// prepare options with the desired Git reference.
 	opts := &github.RepositoryContentGetOptions{
 		Ref: ref,
 	}
 
-	archiveLink, _, err := a.client.Repositories.GetArchiveLink(context.Background(), owner, repoName, github.ArchiveFormat(format), opts, false)
+	// define the format for the archive (e.g., "tarball").
+	format := "tarball"
+
+	// get the archive link from the GitHub repository.
+	archiveLink, _, err := a.client.Repositories.GetArchiveLink(
+		context.Background(),
+		owner,
+		repoName,
+		github.ArchiveFormat(format),
+		opts,
+		3,
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	// fetch the archive data from the obtained link.
 	resp, err := http.Get(archiveLink.String())
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	// check if the HTTP status indicates a successful fetch.
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch archive: %s", resp.Status)
 	}
 
+	// read the archive data into a byte slice.
 	archiveData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -158,14 +204,78 @@ func (a *GitHubApi) GetRepositoryArchive(owner, repoName, format, ref string) ([
 }
 
 func (a *GitHubApi) GetLatestCommitHash(owner, repoName, filePath, ref string) (string, error) {
+	// prepare options with the desired Git reference.
 	opts := &github.RepositoryContentGetOptions{
 		Ref: ref,
 	}
 
+	// get the contents of the specified file from the GitHub repository.
 	fileContent, _, _, err := a.client.Repositories.GetContents(context.Background(), owner, repoName, filePath, opts)
 	if err != nil {
 		return "", err
 	}
 
+	// extract and return the SHA (commit hash) associated with the file.
 	return *fileContent.SHA, nil
+}
+
+func (a *GitHubApi) DeleteDirs(owner, repoName string, folderPaths ...string) error {
+	for _, folderPath := range folderPaths {
+		// define the file path for a .gitkeep file within the folder.
+		filePath := fmt.Sprintf("%s/%s", folderPath, ".gitkeep")
+
+		// configure options for committing the delete operation.
+		commitOpts := &github.RepositoryContentFileOptions{
+			Message: github.String(fmt.Sprintf("Delete folder %s", folderPath)),
+			Branch:  github.String("main"), // Set the branch where the folder deletion should occur
+		}
+
+		// attempt to delete the .gitkeep file, effectively removing the folder.
+		_, _, err := a.client.Repositories.DeleteFile(context.Background(), owner, repoName, filePath, commitOpts)
+
+		// check if an error occurred during the delete operation.
+		if err != nil && !utils.IsFileNotFoundError(err) {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (a *GitHubApi) AutoCreateRepository(owner, repoName string, isPrivate bool) (string, error) {
+	ctx := context.Background()
+	// new repository's URL
+	newRepoURL := githubURLPrefix + owner + "/" + repoName
+	_, _, err := a.client.Repositories.Get(ctx, owner, repoName)
+	if err != nil {
+		// if the error is caused by the inability to find a repository with the name, create the repository
+		if _, ok := err.(*github.ErrorResponse); ok {
+			newRepo := &github.Repository{
+				Name:        github.String(repoName),
+				Private:     &isPrivate,
+				Description: github.String("generate by cwgo"),
+				AutoInit:    github.Bool(true),
+			}
+
+			_, _, err := a.client.Repositories.Create(ctx, "", newRepo)
+			if err != nil {
+				return "", err
+			}
+
+			return newRepoURL, nil
+		}
+		return "", err
+	}
+
+	return newRepoURL, nil
+}
+
+func (a *GitHubApi) GetRepositoryPrivacy(owner, repoName string) (bool, error) {
+	ctx := context.Background()
+	repo, _, err := a.client.Repositories.Get(ctx, owner, repoName)
+	if err != nil {
+		return false, err
+	}
+
+	return repo.GetPrivate(), err
 }

@@ -19,10 +19,7 @@
 package store
 
 import (
-	"fmt"
 	"github.com/cloudwego/cwgo/platform/server/shared/consts"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -34,62 +31,4 @@ type Config struct {
 
 func (c Config) GetStoreType() consts.StoreType {
 	return consts.StoreTypeMapToNum[c.Type]
-}
-
-func (c Config) NewMysqlDB() (*gorm.DB, error) {
-	return gorm.Open(mysql.Open(c.Mysql.GetDsn()), &gorm.Config{
-		PrepareStmt: true,
-	})
-}
-
-type Mysql struct {
-	Addr     string `mapstructure:"addr"`
-	Port     string `mapstructure:"port"`
-	Db       string `mapstructure:"db"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-	Charset  string `mapstructure:"charset"`
-}
-
-func (m Mysql) GetDsn() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Asia%%2FShanghai",
-		m.Username,
-		m.Password,
-		m.Addr,
-		m.Port,
-		m.Db,
-		m.Charset)
-}
-
-type Mongo struct {
-	Addr         string `mapstructure:"addr"`
-	Port         string `mapstructure:"port"`
-	DatabaseName string `mapstructure:"databaseName"`
-	Username     string `mapstructure:"username"`
-	Password     string `mapstructure:"password"`
-}
-
-func (m Mongo) GetAddr() string {
-	return fmt.Sprintf("mongodb://%s:%s", m.Addr, m.Port)
-}
-
-type Redis struct {
-	StandAlone RedisStandAlone `mapstructure:"standalone"`
-	Cluster    RedisCluster    `mapstructure:"cluster"`
-}
-
-type RedisStandAlone struct {
-	Addr     string `mapstructure:"addr"`
-	Port     string `mapstructure:"port"`
-	Password string `mapstructure:"password"`
-	Db       int    `mapstructure:"db"`
-}
-
-type RedisCluster struct {
-	MasterNum int `mapstructure:"masterNum"`
-	Addrs     []*struct {
-		Ip   string `mapstructure:"ip"`
-		Port string `mapstructure:"port"`
-	} `mapstructure:"addrs"`
-	Password string `mapstructure:"password"`
 }

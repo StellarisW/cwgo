@@ -27,6 +27,10 @@ import (
 	"github.com/cloudwego/cwgo/platform/server/shared/consts"
 	"github.com/cloudwego/cwgo/platform/server/shared/utils"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 type Manager struct {
@@ -66,7 +70,7 @@ func InitManager(serverType consts.ServerType, serverMode consts.ServerMode, con
 			}
 		}
 
-		configPath = fmt.Sprintf("config-%s.yaml", consts.ServerModeMapToStr[serverMode])
+		configPath = filepath.ToSlash(filepath.Join(configPath, fmt.Sprintf("config-%s.yaml", consts.ServerModeMapToStr[serverMode])))
 
 		fmt.Printf("get config path: %s\n", configPath)
 
@@ -89,9 +93,33 @@ func InitManager(serverType consts.ServerType, serverMode consts.ServerMode, con
 
 	}
 
-	serviceId, err := utils.NewServiceId()
-	if err != nil {
-		return err
+	// init consts in config
+	consts.ProxyUrl = config.App.ProxyUrl
+
+	// get service id
+	var serviceId string
+	_, err := os.Stat(consts.AgentMetadataFile)
+	if os.IsNotExist(err) {
+		// agent file not exist
+		// generate a new service id
+		serviceId, err = utils.NewServiceId()
+		if err != nil {
+			return err
+		}
+	} else {
+		// use exist service id
+		yamlFileBytes, err := ioutil.ReadFile("config.yaml")
+		if err != nil {
+			panic(fmt.Sprintf("read agent metadata file failed, err: %v", err))
+		}
+
+		var agentMetadata agent.Metadata
+		err = yaml.Unmarshal(yamlFileBytes, &agentMetadata)
+		if err != nil {
+			panic(fmt.Sprintf("unmarshal agent metadata file failed, err: %v", err))
+		}
+
+		serviceId = agentMetadata.ServiceId
 	}
 
 	switch serverType {
@@ -101,7 +129,7 @@ func InitManager(serverType consts.ServerType, serverMode consts.ServerMode, con
 			ServerMode:       serverMode,
 			ServiceId:        serviceId,
 			Config:           config,
-			ApiConfigManager: api.NewConfigManager(config.Api, config.Registry, serviceId),
+			ApiConfigManager: api.NewConfigManager(config.Api, config.Registry, config.Store, serviceId),
 		}
 	case consts.ServerTypeNumAgent:
 		manager = &Manager{
@@ -109,7 +137,7 @@ func InitManager(serverType consts.ServerType, serverMode consts.ServerMode, con
 			ServerMode:         serverMode,
 			ServiceId:          serviceId,
 			Config:             config,
-			AgentConfigManager: agent.NewConfigManager(config.Agent, config.Registry, serviceId),
+			AgentConfigManager: agent.NewConfigManager(config.Agent, config.Registry, config.Store, serviceId),
 		}
 	}
 

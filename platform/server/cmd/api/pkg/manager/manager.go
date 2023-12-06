@@ -21,14 +21,13 @@ package manager
 import (
 	"context"
 	"fmt"
-	"github.com/bytedance/sonic"
 	"github.com/cloudwego/cwgo/platform/server/cmd/api/pkg/dispatcher"
 	"github.com/cloudwego/cwgo/platform/server/shared/config/app"
 	"github.com/cloudwego/cwgo/platform/server/shared/consts"
 	"github.com/cloudwego/cwgo/platform/server/shared/dao"
 	"github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/agent"
 	"github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/agent/agentservice"
-	"github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/base"
+	"github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/model"
 	"github.com/cloudwego/cwgo/platform/server/shared/logger"
 	"github.com/cloudwego/cwgo/platform/server/shared/registry"
 	"github.com/cloudwego/cwgo/platform/server/shared/service"
@@ -77,23 +76,31 @@ func NewManager(appConf app.Config, daoManager *dao.Manager, dispatcher dispatch
 		resolver:   resolver,
 	}
 
-	repos, err := daoManager.Repository.GetAllRepositories()
-	if err != nil {
-		panic(fmt.Sprintf("get all repositories failed, err: %v", err))
-	}
-
-	for _, repo := range repos {
-		err = manager.AddTask(
-			task.NewTask(
-				task.SyncRepo,
-				manager.syncRepositoryInterval,
-				task.SyncRepoData{
-					RepositoryId: repo.Id,
-				},
-			))
+	page := 1
+	for {
+		idlModels, total, err := daoManager.Idl.GetIDLList(context.Background(), int32(page), 1000, consts.OrderNumDec, "update_time")
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("get idl list failed, err: %v", err))
 		}
+		for _, idlModel := range idlModels {
+			err = manager.AddTask(
+				task.NewTask(
+					model.Type_sync_idl_data,
+					manager.syncRepositoryInterval.String(),
+					&model.Data{
+						SyncIdlData: &model.SyncIdlData{
+							IdlId: idlModel.Id,
+						},
+					},
+				))
+			if err != nil {
+				panic(err)
+			}
+		}
+		if int64(page)*1000 >= total {
+			break
+		}
+		page++
 	}
 
 	go manager.StartUpdate()
@@ -101,7 +108,32 @@ func NewManager(appConf app.Config, daoManager *dao.Manager, dispatcher dispatch
 	return manager
 }
 
-func (m *Manager) AddTask(t *task.Task) error {
+func (m *Manager) GetAgentClient() (agentservice.Client, error) {
+	c, err := agentservice.NewClient(
+		consts.ServiceNameAgent,
+		client.WithResolver(m.resolver),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (m *Manager) GetAgentClientByServiceId(serviceId string) (agentservice.Client, error) {
+	c, err := agentservice.NewClient(
+		consts.ServiceNameAgent,
+		client.WithResolver(m.resolver),
+		client.WithTag("service_id", serviceId),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (m *Manager) AddTask(t *model.Task) error {
 	err := m.dispatcher.AddTask(t)
 	if err != nil {
 		return fmt.Errorf("add task to dispatcher failed, err: %v", err)
@@ -121,26 +153,20 @@ func (m *Manager) UpdateAgentTasks() {
 		go func(serviceId string) {
 			defer wg.Done()
 
-			c, err := agentservice.NewClient(
-				consts.ServiceNameAgent,
-				client.WithResolver(m.resolver),
-				client.WithTag("service_id", serviceId),
-			)
+			c, err := m.GetAgentClientByServiceId(serviceId)
 			if err != nil {
-				logger.Logger.Error("connect to rpc client failed", zap.Error(err))
-				return
+				logger.Logger.Error("get agent client failed", zap.Error(err))
 			}
 
 			tasks := m.dispatcher.GetTaskByServiceId(serviceId)
 
-			tasksModels := make([]*base.Task, len(tasks))
+			tasksModels := make([]*model.Task, len(tasks))
 			for i, t := range tasks {
-				data, _ := sonic.MarshalString(t.Data)
-				tasksModels[i] = &base.Task{
+				tasksModels[i] = &model.Task{
 					Id:           t.Id,
-					Type:         int32(t.Type),
-					ScheduleTime: t.ScheduleTime.String(),
-					Data:         data,
+					Type:         t.Type,
+					ScheduleTime: t.ScheduleTime,
+					Data:         t.Data,
 				}
 			}
 

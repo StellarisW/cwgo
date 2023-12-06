@@ -20,15 +20,10 @@ package service
 
 import (
 	"context"
-	"github.com/bytedance/sonic"
 	"github.com/cloudwego/cwgo/platform/server/cmd/agent/internal/svc"
-	"github.com/cloudwego/cwgo/platform/server/cmd/agent/pkg/cron"
+	"github.com/cloudwego/cwgo/platform/server/cmd/agent/pkg/processor"
 	agent "github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/agent"
-	"github.com/cloudwego/cwgo/platform/server/shared/logger"
-	"github.com/cloudwego/cwgo/platform/server/shared/task"
-	"go.uber.org/zap"
-	"net/http"
-	"time"
+	"github.com/cloudwego/cwgo/platform/server/shared/kitex_gen/model"
 )
 
 type UpdateTasksService struct {
@@ -44,61 +39,18 @@ func NewUpdateTasksService(ctx context.Context, svcCtx *svc.ServiceContext) *Upd
 
 // Run create note info
 func (s *UpdateTasksService) Run(req *agent.UpdateTasksReq) (resp *agent.UpdateTasksRes, err error) {
-	tasks := make([]*task.Task, 0, len(req.Tasks))
+	tasks := make([]model.Task, 0, len(req.Tasks))
 
 	for _, t := range req.Tasks {
-		tp := task.Type(t.Type)
-		switch tp {
-		case task.SyncIdl:
-			var data task.SyncIdlData
-			err := sonic.Unmarshal([]byte(t.Data), &data)
-			if err != nil {
-				logger.Logger.Error("json unmarshal failed", zap.Error(err), zap.String("data", t.Data))
-				return &agent.UpdateTasksRes{
-					Code: http.StatusInternalServerError,
-					Msg:  "internal err",
-				}, nil
-			}
-
-			scheduleTime, _ := time.ParseDuration(t.ScheduleTime)
-
-			tasks = append(tasks, &task.Task{
-				Id:           t.Id,
-				Type:         task.Type(t.Type),
-				ScheduleTime: scheduleTime,
-				Data:         data,
-			})
-		case task.SyncRepo:
-			var data task.SyncRepoData
-			err := sonic.Unmarshal([]byte(t.Data), &data)
-			if err != nil {
-				logger.Logger.Error("json unmarshal failed", zap.Error(err), zap.String("data", t.Data))
-				return &agent.UpdateTasksRes{
-					Code: http.StatusInternalServerError,
-					Msg:  "internal err",
-				}, nil
-			}
-
-			scheduleTime, _ := time.ParseDuration(t.ScheduleTime)
-
-			tasks = append(tasks, &task.Task{
-				Id:           t.Id,
-				Type:         task.Type(t.Type),
-				ScheduleTime: scheduleTime,
-				Data:         data,
-			})
-		}
+		tasks = append(tasks, model.Task{
+			Id:           t.Id,
+			Type:         t.Type,
+			ScheduleTime: t.ScheduleTime,
+			Data:         t.Data,
+		})
 	}
 
-	cron.CronInstance.Stop()
-
-	cron.CronInstance.EmptyTask()
-
-	for _, t := range tasks {
-		cron.CronInstance.AddTask(t)
-	}
-
-	cron.CronInstance.Start()
+	processor.ProcessorInstance.UpdateTasks(tasks)
 
 	return &agent.UpdateTasksRes{
 		Code: 0,

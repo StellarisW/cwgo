@@ -19,11 +19,26 @@ func NewServiceInfo() *kitex.ServiceInfo {
 	serviceName := "AgentService"
 	handlerType := (*agent.AgentService)(nil)
 	methods := map[string]kitex.MethodInfo{
-		"GenerateCode":           kitex.NewMethodInfo(generateCodeHandler, newAgentServiceGenerateCodeArgs, newAgentServiceGenerateCodeResult, false),
-		"SyncRepositoryById":     kitex.NewMethodInfo(syncRepositoryByIdHandler, newAgentServiceSyncRepositoryByIdArgs, newAgentServiceSyncRepositoryByIdResult, false),
-		"UpdateRepositoryStatus": kitex.NewMethodInfo(updateRepositoryStatusHandler, newAgentServiceUpdateRepositoryStatusArgs, newAgentServiceUpdateRepositoryStatusResult, false),
-		"SyncIDLsById":           kitex.NewMethodInfo(syncIDLsByIdHandler, newAgentServiceSyncIDLsByIdArgs, newAgentServiceSyncIDLsByIdResult, false),
-		"UpdateTasks":            kitex.NewMethodInfo(updateTasksHandler, newAgentServiceUpdateTasksArgs, newAgentServiceUpdateTasksResult, false),
+		"AddRepository":      kitex.NewMethodInfo(addRepositoryHandler, newAgentServiceAddRepositoryArgs, newAgentServiceAddRepositoryResult, false),
+		"DeleteRepositories": kitex.NewMethodInfo(deleteRepositoriesHandler, newAgentServiceDeleteRepositoriesArgs, newAgentServiceDeleteRepositoriesResult, false),
+		"UpdateRepository":   kitex.NewMethodInfo(updateRepositoryHandler, newAgentServiceUpdateRepositoryArgs, newAgentServiceUpdateRepositoryResult, false),
+		"GetRepositories":    kitex.NewMethodInfo(getRepositoriesHandler, newAgentServiceGetRepositoriesArgs, newAgentServiceGetRepositoriesResult, false),
+		"SyncRepositoryById": kitex.NewMethodInfo(syncRepositoryByIdHandler, newAgentServiceSyncRepositoryByIdArgs, newAgentServiceSyncRepositoryByIdResult, false),
+		"AddIDL":             kitex.NewMethodInfo(addIDLHandler, newAgentServiceAddIDLArgs, newAgentServiceAddIDLResult, false),
+		"DeleteIDL":          kitex.NewMethodInfo(deleteIDLHandler, newAgentServiceDeleteIDLArgs, newAgentServiceDeleteIDLResult, false),
+		"UpdateIDL":          kitex.NewMethodInfo(updateIDLHandler, newAgentServiceUpdateIDLArgs, newAgentServiceUpdateIDLResult, false),
+		"GetIDLs":            kitex.NewMethodInfo(getIDLsHandler, newAgentServiceGetIDLsArgs, newAgentServiceGetIDLsResult, false),
+		"SyncIDLsById":       kitex.NewMethodInfo(syncIDLsByIdHandler, newAgentServiceSyncIDLsByIdArgs, newAgentServiceSyncIDLsByIdResult, false),
+		"AddTemplate":        kitex.NewMethodInfo(addTemplateHandler, newAgentServiceAddTemplateArgs, newAgentServiceAddTemplateResult, false),
+		"DeleteTemplate":     kitex.NewMethodInfo(deleteTemplateHandler, newAgentServiceDeleteTemplateArgs, newAgentServiceDeleteTemplateResult, false),
+		"UpdateTemplate":     kitex.NewMethodInfo(updateTemplateHandler, newAgentServiceUpdateTemplateArgs, newAgentServiceUpdateTemplateResult, false),
+		"GetTemplates":       kitex.NewMethodInfo(getTemplatesHandler, newAgentServiceGetTemplatesArgs, newAgentServiceGetTemplatesResult, false),
+		"AddTemplateItem":    kitex.NewMethodInfo(addTemplateItemHandler, newAgentServiceAddTemplateItemArgs, newAgentServiceAddTemplateItemResult, false),
+		"DeleteTemplateItem": kitex.NewMethodInfo(deleteTemplateItemHandler, newAgentServiceDeleteTemplateItemArgs, newAgentServiceDeleteTemplateItemResult, false),
+		"UpdateTemplateItem": kitex.NewMethodInfo(updateTemplateItemHandler, newAgentServiceUpdateTemplateItemArgs, newAgentServiceUpdateTemplateItemResult, false),
+		"GetTemplateItems":   kitex.NewMethodInfo(getTemplateItemsHandler, newAgentServiceGetTemplateItemsArgs, newAgentServiceGetTemplateItemsResult, false),
+		"UpdateTasks":        kitex.NewMethodInfo(updateTasksHandler, newAgentServiceUpdateTasksArgs, newAgentServiceUpdateTasksResult, false),
+		"GenerateCode":       kitex.NewMethodInfo(generateCodeHandler, newAgentServiceGenerateCodeArgs, newAgentServiceGenerateCodeResult, false),
 	}
 	extra := map[string]interface{}{
 		"PackageName": "agent",
@@ -39,22 +54,76 @@ func NewServiceInfo() *kitex.ServiceInfo {
 	return svcInfo
 }
 
-func generateCodeHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	realArg := arg.(*agent.AgentServiceGenerateCodeArgs)
-	realResult := result.(*agent.AgentServiceGenerateCodeResult)
-	success, err := handler.(agent.AgentService).GenerateCode(ctx, realArg.Req)
+func addRepositoryHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceAddRepositoryArgs)
+	realResult := result.(*agent.AgentServiceAddRepositoryResult)
+	success, err := handler.(agent.AgentService).AddRepository(ctx, realArg.Req)
 	if err != nil {
 		return err
 	}
 	realResult.Success = success
 	return nil
 }
-func newAgentServiceGenerateCodeArgs() interface{} {
-	return agent.NewAgentServiceGenerateCodeArgs()
+func newAgentServiceAddRepositoryArgs() interface{} {
+	return agent.NewAgentServiceAddRepositoryArgs()
 }
 
-func newAgentServiceGenerateCodeResult() interface{} {
-	return agent.NewAgentServiceGenerateCodeResult()
+func newAgentServiceAddRepositoryResult() interface{} {
+	return agent.NewAgentServiceAddRepositoryResult()
+}
+
+func deleteRepositoriesHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceDeleteRepositoriesArgs)
+	realResult := result.(*agent.AgentServiceDeleteRepositoriesResult)
+	success, err := handler.(agent.AgentService).DeleteRepositories(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceDeleteRepositoriesArgs() interface{} {
+	return agent.NewAgentServiceDeleteRepositoriesArgs()
+}
+
+func newAgentServiceDeleteRepositoriesResult() interface{} {
+	return agent.NewAgentServiceDeleteRepositoriesResult()
+}
+
+func updateRepositoryHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceUpdateRepositoryArgs)
+	realResult := result.(*agent.AgentServiceUpdateRepositoryResult)
+	success, err := handler.(agent.AgentService).UpdateRepository(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceUpdateRepositoryArgs() interface{} {
+	return agent.NewAgentServiceUpdateRepositoryArgs()
+}
+
+func newAgentServiceUpdateRepositoryResult() interface{} {
+	return agent.NewAgentServiceUpdateRepositoryResult()
+}
+
+func getRepositoriesHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceGetRepositoriesArgs)
+	realResult := result.(*agent.AgentServiceGetRepositoriesResult)
+	success, err := handler.(agent.AgentService).GetRepositories(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceGetRepositoriesArgs() interface{} {
+	return agent.NewAgentServiceGetRepositoriesArgs()
+}
+
+func newAgentServiceGetRepositoriesResult() interface{} {
+	return agent.NewAgentServiceGetRepositoriesResult()
 }
 
 func syncRepositoryByIdHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
@@ -75,22 +144,76 @@ func newAgentServiceSyncRepositoryByIdResult() interface{} {
 	return agent.NewAgentServiceSyncRepositoryByIdResult()
 }
 
-func updateRepositoryStatusHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
-	realArg := arg.(*agent.AgentServiceUpdateRepositoryStatusArgs)
-	realResult := result.(*agent.AgentServiceUpdateRepositoryStatusResult)
-	success, err := handler.(agent.AgentService).UpdateRepositoryStatus(ctx, realArg.Req)
+func addIDLHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceAddIDLArgs)
+	realResult := result.(*agent.AgentServiceAddIDLResult)
+	success, err := handler.(agent.AgentService).AddIDL(ctx, realArg.Req)
 	if err != nil {
 		return err
 	}
 	realResult.Success = success
 	return nil
 }
-func newAgentServiceUpdateRepositoryStatusArgs() interface{} {
-	return agent.NewAgentServiceUpdateRepositoryStatusArgs()
+func newAgentServiceAddIDLArgs() interface{} {
+	return agent.NewAgentServiceAddIDLArgs()
 }
 
-func newAgentServiceUpdateRepositoryStatusResult() interface{} {
-	return agent.NewAgentServiceUpdateRepositoryStatusResult()
+func newAgentServiceAddIDLResult() interface{} {
+	return agent.NewAgentServiceAddIDLResult()
+}
+
+func deleteIDLHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceDeleteIDLArgs)
+	realResult := result.(*agent.AgentServiceDeleteIDLResult)
+	success, err := handler.(agent.AgentService).DeleteIDL(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceDeleteIDLArgs() interface{} {
+	return agent.NewAgentServiceDeleteIDLArgs()
+}
+
+func newAgentServiceDeleteIDLResult() interface{} {
+	return agent.NewAgentServiceDeleteIDLResult()
+}
+
+func updateIDLHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceUpdateIDLArgs)
+	realResult := result.(*agent.AgentServiceUpdateIDLResult)
+	success, err := handler.(agent.AgentService).UpdateIDL(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceUpdateIDLArgs() interface{} {
+	return agent.NewAgentServiceUpdateIDLArgs()
+}
+
+func newAgentServiceUpdateIDLResult() interface{} {
+	return agent.NewAgentServiceUpdateIDLResult()
+}
+
+func getIDLsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceGetIDLsArgs)
+	realResult := result.(*agent.AgentServiceGetIDLsResult)
+	success, err := handler.(agent.AgentService).GetIDLs(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceGetIDLsArgs() interface{} {
+	return agent.NewAgentServiceGetIDLsArgs()
+}
+
+func newAgentServiceGetIDLsResult() interface{} {
+	return agent.NewAgentServiceGetIDLsResult()
 }
 
 func syncIDLsByIdHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
@@ -111,6 +234,150 @@ func newAgentServiceSyncIDLsByIdResult() interface{} {
 	return agent.NewAgentServiceSyncIDLsByIdResult()
 }
 
+func addTemplateHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceAddTemplateArgs)
+	realResult := result.(*agent.AgentServiceAddTemplateResult)
+	success, err := handler.(agent.AgentService).AddTemplate(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceAddTemplateArgs() interface{} {
+	return agent.NewAgentServiceAddTemplateArgs()
+}
+
+func newAgentServiceAddTemplateResult() interface{} {
+	return agent.NewAgentServiceAddTemplateResult()
+}
+
+func deleteTemplateHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceDeleteTemplateArgs)
+	realResult := result.(*agent.AgentServiceDeleteTemplateResult)
+	success, err := handler.(agent.AgentService).DeleteTemplate(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceDeleteTemplateArgs() interface{} {
+	return agent.NewAgentServiceDeleteTemplateArgs()
+}
+
+func newAgentServiceDeleteTemplateResult() interface{} {
+	return agent.NewAgentServiceDeleteTemplateResult()
+}
+
+func updateTemplateHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceUpdateTemplateArgs)
+	realResult := result.(*agent.AgentServiceUpdateTemplateResult)
+	success, err := handler.(agent.AgentService).UpdateTemplate(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceUpdateTemplateArgs() interface{} {
+	return agent.NewAgentServiceUpdateTemplateArgs()
+}
+
+func newAgentServiceUpdateTemplateResult() interface{} {
+	return agent.NewAgentServiceUpdateTemplateResult()
+}
+
+func getTemplatesHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceGetTemplatesArgs)
+	realResult := result.(*agent.AgentServiceGetTemplatesResult)
+	success, err := handler.(agent.AgentService).GetTemplates(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceGetTemplatesArgs() interface{} {
+	return agent.NewAgentServiceGetTemplatesArgs()
+}
+
+func newAgentServiceGetTemplatesResult() interface{} {
+	return agent.NewAgentServiceGetTemplatesResult()
+}
+
+func addTemplateItemHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceAddTemplateItemArgs)
+	realResult := result.(*agent.AgentServiceAddTemplateItemResult)
+	success, err := handler.(agent.AgentService).AddTemplateItem(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceAddTemplateItemArgs() interface{} {
+	return agent.NewAgentServiceAddTemplateItemArgs()
+}
+
+func newAgentServiceAddTemplateItemResult() interface{} {
+	return agent.NewAgentServiceAddTemplateItemResult()
+}
+
+func deleteTemplateItemHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceDeleteTemplateItemArgs)
+	realResult := result.(*agent.AgentServiceDeleteTemplateItemResult)
+	success, err := handler.(agent.AgentService).DeleteTemplateItem(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceDeleteTemplateItemArgs() interface{} {
+	return agent.NewAgentServiceDeleteTemplateItemArgs()
+}
+
+func newAgentServiceDeleteTemplateItemResult() interface{} {
+	return agent.NewAgentServiceDeleteTemplateItemResult()
+}
+
+func updateTemplateItemHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceUpdateTemplateItemArgs)
+	realResult := result.(*agent.AgentServiceUpdateTemplateItemResult)
+	success, err := handler.(agent.AgentService).UpdateTemplateItem(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceUpdateTemplateItemArgs() interface{} {
+	return agent.NewAgentServiceUpdateTemplateItemArgs()
+}
+
+func newAgentServiceUpdateTemplateItemResult() interface{} {
+	return agent.NewAgentServiceUpdateTemplateItemResult()
+}
+
+func getTemplateItemsHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceGetTemplateItemsArgs)
+	realResult := result.(*agent.AgentServiceGetTemplateItemsResult)
+	success, err := handler.(agent.AgentService).GetTemplateItems(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceGetTemplateItemsArgs() interface{} {
+	return agent.NewAgentServiceGetTemplateItemsArgs()
+}
+
+func newAgentServiceGetTemplateItemsResult() interface{} {
+	return agent.NewAgentServiceGetTemplateItemsResult()
+}
+
 func updateTasksHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	realArg := arg.(*agent.AgentServiceUpdateTasksArgs)
 	realResult := result.(*agent.AgentServiceUpdateTasksResult)
@@ -129,6 +396,24 @@ func newAgentServiceUpdateTasksResult() interface{} {
 	return agent.NewAgentServiceUpdateTasksResult()
 }
 
+func generateCodeHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	realArg := arg.(*agent.AgentServiceGenerateCodeArgs)
+	realResult := result.(*agent.AgentServiceGenerateCodeResult)
+	success, err := handler.(agent.AgentService).GenerateCode(ctx, realArg.Req)
+	if err != nil {
+		return err
+	}
+	realResult.Success = success
+	return nil
+}
+func newAgentServiceGenerateCodeArgs() interface{} {
+	return agent.NewAgentServiceGenerateCodeArgs()
+}
+
+func newAgentServiceGenerateCodeResult() interface{} {
+	return agent.NewAgentServiceGenerateCodeResult()
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -139,11 +424,41 @@ func newServiceClient(c client.Client) *kClient {
 	}
 }
 
-func (p *kClient) GenerateCode(ctx context.Context, req *agent.GenerateCodeReq) (r *agent.GenerateCodeRes, err error) {
-	var _args agent.AgentServiceGenerateCodeArgs
+func (p *kClient) AddRepository(ctx context.Context, req *agent.AddRepositoryReq) (r *agent.AddRepositoryRes, err error) {
+	var _args agent.AgentServiceAddRepositoryArgs
 	_args.Req = req
-	var _result agent.AgentServiceGenerateCodeResult
-	if err = p.c.Call(ctx, "GenerateCode", &_args, &_result); err != nil {
+	var _result agent.AgentServiceAddRepositoryResult
+	if err = p.c.Call(ctx, "AddRepository", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) DeleteRepositories(ctx context.Context, req *agent.DeleteRepositoriesReq) (r *agent.DeleteRepositoriesRes, err error) {
+	var _args agent.AgentServiceDeleteRepositoriesArgs
+	_args.Req = req
+	var _result agent.AgentServiceDeleteRepositoriesResult
+	if err = p.c.Call(ctx, "DeleteRepositories", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateRepository(ctx context.Context, req *agent.UpdateRepositoryReq) (r *agent.UpdateRepositoryRes, err error) {
+	var _args agent.AgentServiceUpdateRepositoryArgs
+	_args.Req = req
+	var _result agent.AgentServiceUpdateRepositoryResult
+	if err = p.c.Call(ctx, "UpdateRepository", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetRepositories(ctx context.Context, req *agent.GetRepositoriesReq) (r *agent.GetRepositoriesRes, err error) {
+	var _args agent.AgentServiceGetRepositoriesArgs
+	_args.Req = req
+	var _result agent.AgentServiceGetRepositoriesResult
+	if err = p.c.Call(ctx, "GetRepositories", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -159,11 +474,41 @@ func (p *kClient) SyncRepositoryById(ctx context.Context, req *agent.SyncReposit
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) UpdateRepositoryStatus(ctx context.Context, req *agent.UpdateRepositoryStatusReq) (r *agent.UpdateRepositoryStatusRes, err error) {
-	var _args agent.AgentServiceUpdateRepositoryStatusArgs
+func (p *kClient) AddIDL(ctx context.Context, req *agent.AddIDLReq) (r *agent.AddIDLRes, err error) {
+	var _args agent.AgentServiceAddIDLArgs
 	_args.Req = req
-	var _result agent.AgentServiceUpdateRepositoryStatusResult
-	if err = p.c.Call(ctx, "UpdateRepositoryStatus", &_args, &_result); err != nil {
+	var _result agent.AgentServiceAddIDLResult
+	if err = p.c.Call(ctx, "AddIDL", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) DeleteIDL(ctx context.Context, req *agent.DeleteIDLsReq) (r *agent.DeleteIDLsRes, err error) {
+	var _args agent.AgentServiceDeleteIDLArgs
+	_args.Req = req
+	var _result agent.AgentServiceDeleteIDLResult
+	if err = p.c.Call(ctx, "DeleteIDL", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateIDL(ctx context.Context, req *agent.UpdateIDLReq) (r *agent.UpdateIDLRes, err error) {
+	var _args agent.AgentServiceUpdateIDLArgs
+	_args.Req = req
+	var _result agent.AgentServiceUpdateIDLResult
+	if err = p.c.Call(ctx, "UpdateIDL", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetIDLs(ctx context.Context, req *agent.GetIDLsReq) (r *agent.GetIDLsRes, err error) {
+	var _args agent.AgentServiceGetIDLsArgs
+	_args.Req = req
+	var _result agent.AgentServiceGetIDLsResult
+	if err = p.c.Call(ctx, "GetIDLs", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -179,11 +524,101 @@ func (p *kClient) SyncIDLsById(ctx context.Context, req *agent.SyncIDLsByIdReq) 
 	return _result.GetSuccess(), nil
 }
 
+func (p *kClient) AddTemplate(ctx context.Context, req *agent.AddTemplateReq) (r *agent.AddTemplateRes, err error) {
+	var _args agent.AgentServiceAddTemplateArgs
+	_args.Req = req
+	var _result agent.AgentServiceAddTemplateResult
+	if err = p.c.Call(ctx, "AddTemplate", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) DeleteTemplate(ctx context.Context, req *agent.DeleteTemplateReq) (r *agent.DeleteTemplateRes, err error) {
+	var _args agent.AgentServiceDeleteTemplateArgs
+	_args.Req = req
+	var _result agent.AgentServiceDeleteTemplateResult
+	if err = p.c.Call(ctx, "DeleteTemplate", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateTemplate(ctx context.Context, req *agent.UpdateTemplateReq) (r *agent.UpdateTemplateRes, err error) {
+	var _args agent.AgentServiceUpdateTemplateArgs
+	_args.Req = req
+	var _result agent.AgentServiceUpdateTemplateResult
+	if err = p.c.Call(ctx, "UpdateTemplate", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetTemplates(ctx context.Context, req *agent.GetTemplatesReq) (r *agent.GetTemplatesRes, err error) {
+	var _args agent.AgentServiceGetTemplatesArgs
+	_args.Req = req
+	var _result agent.AgentServiceGetTemplatesResult
+	if err = p.c.Call(ctx, "GetTemplates", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) AddTemplateItem(ctx context.Context, req *agent.AddTemplateItemReq) (r *agent.AddTemplateItemRes, err error) {
+	var _args agent.AgentServiceAddTemplateItemArgs
+	_args.Req = req
+	var _result agent.AgentServiceAddTemplateItemResult
+	if err = p.c.Call(ctx, "AddTemplateItem", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) DeleteTemplateItem(ctx context.Context, req *agent.DeleteTemplateItemReq) (r *agent.DeleteTemplateItemRes, err error) {
+	var _args agent.AgentServiceDeleteTemplateItemArgs
+	_args.Req = req
+	var _result agent.AgentServiceDeleteTemplateItemResult
+	if err = p.c.Call(ctx, "DeleteTemplateItem", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) UpdateTemplateItem(ctx context.Context, req *agent.UpdateTemplateItemReq) (r *agent.UpdateTemplateItemRes, err error) {
+	var _args agent.AgentServiceUpdateTemplateItemArgs
+	_args.Req = req
+	var _result agent.AgentServiceUpdateTemplateItemResult
+	if err = p.c.Call(ctx, "UpdateTemplateItem", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GetTemplateItems(ctx context.Context, req *agent.GetTemplateItemsReq) (r *agent.GetTemplateItemsRes, err error) {
+	var _args agent.AgentServiceGetTemplateItemsArgs
+	_args.Req = req
+	var _result agent.AgentServiceGetTemplateItemsResult
+	if err = p.c.Call(ctx, "GetTemplateItems", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
 func (p *kClient) UpdateTasks(ctx context.Context, req *agent.UpdateTasksReq) (r *agent.UpdateTasksRes, err error) {
 	var _args agent.AgentServiceUpdateTasksArgs
 	_args.Req = req
 	var _result agent.AgentServiceUpdateTasksResult
 	if err = p.c.Call(ctx, "UpdateTasks", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) GenerateCode(ctx context.Context, req *agent.GenerateCodeReq) (r *agent.GenerateCodeRes, err error) {
+	var _args agent.AgentServiceGenerateCodeArgs
+	_args.Req = req
+	var _result agent.AgentServiceGenerateCodeResult
+	if err = p.c.Call(ctx, "GenerateCode", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
